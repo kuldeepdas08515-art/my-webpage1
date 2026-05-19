@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ur" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PlayTube Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a28;
+    --surface3: #22223a;
+    --accent: #ff3b5c;
+    --accent2: #7b5ea7;
+    --text: #f0f0ff;
+    --text2: #9090bb;
+    --text3: #5050aa;
+    --glow: rgba(255,59,92,0.3);
+    --radius: 16px;
+    --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif; min-height:100vh; overflow-x:hidden; }
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background: radial-gradient(ellipse at 15% 20%, rgba(123,94,167,0.13) 0%, transparent 50%),
+                radial-gradient(ellipse at 85% 80%, rgba(255,59,92,0.09) 0%, transparent 50%);
+  }
+
+  /* ── API KEY SCREEN ── */
+  .api-screen {
+    position:fixed; inset:0; background:var(--bg); z-index:500;
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:20px; padding:20px;
+  }
+  .api-screen.hidden { display:none; }
+  .api-card {
+    background:var(--surface); border:1px solid rgba(255,255,255,0.08);
+    border-radius:24px; padding:32px; max-width:480px; width:100%;
+    box-shadow:0 30px 80px rgba(0,0,0,0.5);
+  }
+  .api-logo {
+    display:flex; align-items:center; gap:10px;
+    font-size:22px; font-weight:900; letter-spacing:-1px; margin-bottom:6px;
+  }
+  .api-logo-icon {
+    width:38px; height:38px;
+    background:linear-gradient(135deg,var(--accent),#ff6b35);
+    border-radius:11px; display:flex; align-items:center; justify-content:center;
+    font-size:15px; box-shadow:0 0 20px var(--glow);
+  }
+  .api-logo em { color:var(--accent); font-style:normal; }
+  .api-sub { font-size:13px; color:var(--text2); margin-bottom:24px; line-height:1.6; }
+  .api-label { font-size:12px; font-weight:600; color:var(--text2); margin-bottom:7px; letter-spacing:0.5px; }
+  .api-input {
+    width:100%; background:var(--surface2); border:1.5px solid rgba(255,255,255,0.08);
+    border-radius:12px; padding:12px 16px; color:var(--text);
+    font-family:'Outfit',sans-serif; font-size:14px; outline:none;
+    transition:var(--transition); margin-bottom:14px;
+  }
+  .api-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(255,59,92,0.12); }
+  .api-input::placeholder { color:var(--text3); }
+  .api-btn {
+    width:100%; padding:13px; background:linear-gradient(135deg,var(--accent),#ff6b35);
+    border:none; border-radius:12px; color:#fff;
+    font-family:'Outfit',sans-serif; font-size:14px; font-weight:700;
+    cursor:pointer; transition:var(--transition);
+    box-shadow:0 6px 20px rgba(255,59,92,0.3);
+  }
+  .api-btn:hover { transform:translateY(-1px); box-shadow:0 10px 28px rgba(255,59,92,0.4); }
+  .api-hint {
+    font-size:11px; color:var(--text3); text-align:center; margin-top:14px; line-height:1.7;
+  }
+  .api-hint a { color:var(--accent); text-decoration:none; }
+  .api-hint a:hover { text-decoration:underline; }
+  .api-steps {
+    background:var(--surface2); border-radius:12px; padding:14px 16px;
+    margin-top:16px; font-size:12px; color:var(--text2); line-height:1.9;
+  }
+  .api-steps strong { color:var(--text); }
+
+  /* ── NAV ── */
+  nav {
+    position:sticky; top:0; z-index:100;
+    background:rgba(10,10,15,0.93); backdrop-filter:blur(20px);
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    padding:0 18px; height:62px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .logo {
+    display:flex; align-items:center; gap:9px;
+    font-size:19px; font-weight:900; letter-spacing:-1px;
+    flex-shrink:0; cursor:pointer; text-decoration:none; color:inherit;
+  }
+  .logo-icon {
+    width:32px; height:32px;
+    background:linear-gradient(135deg,var(--accent),#ff6b35);
+    border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-size:13px; box-shadow:0 0 18px var(--glow);
+  }
+  .logo em { color:var(--accent); font-style:normal; }
+
+  .searchbar {
+    flex:1; max-width:500px; margin:0 auto; position:relative;
+  }
+  .searchbar input {
+    width:100%; background:var(--surface2);
+    border:1.5px solid rgba(255,255,255,0.08); border-radius:50px;
+    padding:10px 48px 10px 18px; color:var(--text);
+    font-family:'Outfit',sans-serif; font-size:14px; outline:none;
+    transition:var(--transition);
+  }
+  .searchbar input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(255,59,92,0.12); }
+  .searchbar input::placeholder { color:var(--text3); }
+  .sbtn {
+    position:absolute; right:5px; top:50%; transform:translateY(-50%);
+    background:var(--accent); border:none; border-radius:50%;
+    width:32px; height:32px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    color:white; font-size:14px; transition:var(--transition);
+  }
+  .sbtn:hover { background:#e0283f; transform:translateY(-50%) scale(1.1); }
+
+  .nav-r { display:flex; gap:7px; align-items:center; flex-shrink:0; }
+  .nbtn {
+    width:36px; height:36px; border-radius:50%;
+    background:var(--surface2); border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; color:var(--text2); transition:var(--transition);
+  }
+  .nbtn:hover { background:var(--surface3); color:var(--text); }
+  .api-tag {
+    font-size:10px; font-weight:700; background:rgba(255,59,92,0.15);
+    color:var(--accent); padding:3px 9px; border-radius:20px;
+    border:1px solid rgba(255,59,92,0.25); cursor:pointer;
+    transition:var(--transition); white-space:nowrap;
+  }
+  .api-tag:hover { background:rgba(255,59,92,0.25); }
+
+  /* ── LAYOUT ── */
+  .layout { display:flex; position:relative; z-index:1; min-height:calc(100vh - 62px); }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width:200px; flex-shrink:0;
+    padding:12px 8px;
+    position:sticky; top:62px;
+    height:calc(100vh - 62px); overflow-y:auto; scrollbar-width:none;
+    border-right:1px solid rgba(255,255,255,0.04);
+  }
+  .sidebar::-webkit-scrollbar { display:none; }
+  .sbi {
+    display:flex; align-items:center; gap:10px;
+    padding:9px 11px; border-radius:10px;
+    cursor:pointer; color:var(--text2);
+    font-size:13px; font-weight:500;
+    transition:var(--transition); margin-bottom:2px; position:relative;
+  }
+  .sbi:hover { background:var(--surface2); color:var(--text); }
+  .sbi.on { background:rgba(255,59,92,0.11); color:var(--accent); }
+  .sbi.on::before {
+    content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+    width:3px; height:16px; background:var(--accent); border-radius:0 3px 3px 0;
+  }
+  .sbi-ic { font-size:17px; flex-shrink:0; }
+  .sec-ttl {
+    font-size:9px; font-weight:600; letter-spacing:2px; text-transform:uppercase;
+    color:var(--text3); padding:10px 11px 5px;
+  }
+
+  /* ── MAIN ── */
+  .main { flex:1; padding:18px 22px; min-width:0; padding-bottom:100px; }
+
+  .cats {
+    display:flex; gap:7px; overflow-x:auto; scrollbar-width:none;
+    margin-bottom:20px; padding-bottom:2px;
+  }
+  .cats::-webkit-scrollbar { display:none; }
+  .cat {
+    flex-shrink:0; padding:6px 15px; border-radius:50px;
+    background:var(--surface2); border:1px solid rgba(255,255,255,0.06);
+    color:var(--text2); font-size:12px; font-weight:500;
+    cursor:pointer; transition:var(--transition); white-space:nowrap;
+  }
+  .cat:hover { background:var(--surface3); color:var(--text); }
+  .cat.on { background:var(--text); color:var(--bg); font-weight:700; }
+
+  /* ── GRID ── */
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; }
+  .vcard {
+    cursor:pointer; border-radius:var(--radius); overflow:hidden;
+    background:var(--surface); border:1px solid rgba(255,255,255,0.04);
+    transition:var(--transition); animation:fadeUp 0.4s ease backwards;
+  }
+  .vcard:hover { transform:translateY(-4px); border-color:rgba(255,255,255,0.1); box-shadow:0 16px 40px rgba(0,0,0,0.4); }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+  .thumb { position:relative; aspect-ratio:16/9; overflow:hidden; background:#000; }
+  .thumb img { width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.4s; }
+  .vcard:hover .thumb img { transform:scale(1.04); }
+  .no-thumb {
+    width:100%; height:100%; display:none;
+    align-items:center; justify-content:center; font-size:42px;
+  }
+  .dur {
+    position:absolute; bottom:6px; right:6px;
+    background:rgba(0,0,0,0.85); color:#fff; font-size:10px; font-weight:600;
+    padding:2px 5px; border-radius:4px;
+  }
+  .play-ov {
+    position:absolute; inset:0; background:rgba(0,0,0,0);
+    display:flex; align-items:center; justify-content:center;
+    transition:var(--transition);
+  }
+  .vcard:hover .play-ov { background:rgba(0,0,0,0.28); }
+  .pc {
+    width:46px; height:46px; background:rgba(255,59,92,0.9); border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+    opacity:0; transform:scale(0.8); transition:var(--transition);
+    box-shadow:0 0 24px var(--glow);
+  }
+  .vcard:hover .pc { opacity:1; transform:scale(1); }
+
+  .vinfo { padding:10px; display:flex; gap:9px; }
+  .chdot {
+    width:28px; height:28px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; margin-top:1px;
+  }
+  .vmeta { flex:1; min-width:0; }
+  .vtitle {
+    font-size:13px; font-weight:600; line-height:1.4;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+    overflow:hidden; margin-bottom:4px;
+  }
+  .vsub { font-size:11px; color:var(--text2); }
+  .dot { color:var(--text3); margin:0 2px; }
+
+  /* ── SKELETON ── */
+  .skel-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; }
+  .sk { border-radius:var(--radius); overflow:hidden; background:var(--surface); animation:sh 1.3s ease infinite; }
+  .sk-t { aspect-ratio:16/9; background:var(--surface2); }
+  .sk-b { padding:10px; }
+  .sk-l { height:11px; background:var(--surface2); border-radius:5px; margin-bottom:7px; }
+  @keyframes sh { 0%,100%{opacity:1} 50%{opacity:0.45} }
+
+  /* ── PLAYER MODAL ── */
+  .poverlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.9); backdrop-filter:blur(10px);
+    z-index:200; display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.3s;
+  }
+  .poverlay.open { opacity:1; pointer-events:all; }
+  .pbox {
+    background:var(--surface); border-radius:20px;
+    border:1px solid rgba(255,255,255,0.08);
+    width:93vw; max-width:900px; max-height:92vh;
+    overflow-y:auto; overflow-x:hidden; scrollbar-width:thin;
+    transform:scale(0.93); transition:transform 0.3s;
+    display:flex; flex-direction:column;
+  }
+  .poverlay.open .pbox { transform:scale(1); }
+
+  .phead {
+    display:flex; align-items:center; gap:10px;
+    padding:13px 16px; border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0;
+  }
+  .phead-ttl { flex:1; font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .hbtns { display:flex; gap:6px; }
+  .hbtn {
+    width:32px; height:32px; border-radius:50%; background:var(--surface2); border:none;
+    cursor:pointer; color:var(--text); font-size:15px;
+    display:flex; align-items:center; justify-content:center; transition:var(--transition);
+  }
+  .hbtn:hover { background:var(--accent); }
+
+  .yt-wrap { position:relative; aspect-ratio:16/9; background:#000; flex-shrink:0; }
+  .yt-wrap iframe { width:100%; height:100%; border:none; display:block; }
+
+  .pbody { padding:16px 18px; }
+  .pttl { font-size:16px; font-weight:700; line-height:1.4; margin-bottom:9px; }
+  .pstats { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .pst { font-size:12px; color:var(--text2); }
+  .pacts { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:16px; }
+  .abtn {
+    display:flex; align-items:center; gap:5px;
+    padding:7px 14px; border-radius:50px;
+    background:var(--surface2); border:1px solid rgba(255,255,255,0.06);
+    color:var(--text); font-family:'Outfit',sans-serif; font-size:12px; font-weight:600;
+    cursor:pointer; transition:var(--transition);
+  }
+  .abtn:hover { background:var(--surface3); }
+  .abtn.red-btn { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .abtn.red-btn:hover { background:#e0283f; }
+
+  .yt-link {
+    display:inline-flex; align-items:center; gap:7px;
+    padding:9px 18px; background:#ff0000; border:none; border-radius:50px;
+    color:#fff; font-family:'Outfit',sans-serif; font-size:12px; font-weight:700;
+    cursor:pointer; transition:var(--transition); text-decoration:none; margin-bottom:14px;
+  }
+  .yt-link:hover { background:#cc0000; transform:scale(1.02); }
+
+  .chrow {
+    display:flex; align-items:center; gap:11px;
+    padding:12px; background:var(--surface2); border-radius:var(--radius); margin-bottom:12px;
+  }
+  .chav {
+    width:40px; height:40px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; font-weight:700; flex-shrink:0;
+  }
+  .chinfo { flex:1; }
+  .chnm { font-size:13px; font-weight:600; }
+  .chsub { font-size:11px; color:var(--text2); margin-top:1px; }
+  .sub-b {
+    padding:7px 16px; background:var(--accent); border:none; border-radius:50px;
+    color:#fff; font-family:'Outfit',sans-serif; font-size:12px; font-weight:700;
+    cursor:pointer; transition:var(--transition);
+  }
+  .sub-b:hover { background:#e0283f; transform:scale(1.03); }
+  .sub-b.subd { background:var(--surface3); color:var(--text2); }
+
+  /* ── PIP ── */
+  .pip {
+    position:fixed; bottom:82px; right:16px; width:300px;
+    background:var(--surface); border-radius:15px;
+    border:1px solid rgba(255,255,255,0.1);
+    box-shadow:0 18px 55px rgba(0,0,0,0.6);
+    z-index:300; display:none; flex-direction:column;
+    animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1); cursor:grab; user-select:none;
+  }
+  .pip.on { display:flex; }
+  @keyframes popIn { from{opacity:0;transform:scale(0.78) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  .pip-sc {
+    aspect-ratio:16/9; background:#000;
+    border-radius:15px 15px 0 0; overflow:hidden; position:relative; pointer-events:none;
+  }
+  .pip-sc iframe { width:100%; height:100%; border:none; pointer-events:none; }
+  .pip-bar {
+    padding:7px 10px; display:flex; align-items:center; gap:7px; pointer-events:all;
+  }
+  .pip-ttl { flex:1; font-size:10px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text2); }
+  .pbtn {
+    background:var(--surface2); border:none; color:var(--text2); cursor:pointer;
+    width:24px; height:24px; border-radius:6px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; transition:var(--transition);
+  }
+  .pbtn:hover { background:var(--surface3); color:var(--text); }
+
+  /* ── MINI ── */
+  .mini {
+    position:fixed; bottom:0; left:0; right:0; height:68px;
+    background:rgba(18,18,26,0.97); backdrop-filter:blur(20px);
+    border-top:1px solid rgba(255,255,255,0.07);
+    display:none; align-items:center; gap:11px; padding:0 16px;
+    z-index:150; animation:slideUp 0.3s ease;
+  }
+  .mini.on { display:flex; }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .mprog { position:absolute; top:0; left:0; right:0; height:2px; background:rgba(255,255,255,0.07); }
+  .mpf { height:100%; width:0; background:var(--accent); transition:width 0.5s; }
+  .mthumb {
+    width:48px; height:35px; border-radius:7px; object-fit:cover;
+    background:var(--surface2); flex-shrink:0; cursor:pointer;
+  }
+  .minfo { flex:1; min-width:0; cursor:pointer; }
+  .mttl { font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mch { font-size:10px; color:var(--text2); margin-top:2px; }
+  .mctrls { display:flex; gap:7px; align-items:center; flex-shrink:0; }
+  .mbtnn {
+    background:none; border:none; color:var(--text2); font-size:19px;
+    cursor:pointer; padding:3px; display:flex; align-items:center; transition:var(--transition);
+  }
+  .mbtnn:hover { color:var(--text); }
+  .mbtnn.big { font-size:22px; color:var(--text); }
+  .mbtnn.big:hover { color:var(--accent); }
+
+  /* ── TOAST ── */
+  .toast {
+    position:fixed; bottom:82px; left:50%;
+    transform:translateX(-50%) translateY(14px);
+    background:rgba(28,28,44,0.97); border:1px solid rgba(255,255,255,0.09);
+    color:var(--text); padding:9px 18px; border-radius:50px;
+    font-size:12px; font-weight:500; z-index:999; opacity:0; pointer-events:none;
+    transition:all 0.3s; white-space:nowrap; box-shadow:0 6px 20px rgba(0,0,0,0.4);
+  }
+  .toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ── EMPTY ── */
+  .empty { text-align:center; padding:60px 20px; color:var(--text2); }
+  .empty .ico { font-size:60px; margin-bottom:14px; }
+  .empty h3 { font-size:17px; color:var(--text); margin-bottom:8px; }
+  .empty p { font-size:13px; line-height:1.7; }
+
+  .sec-hd { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .sec-hd h2 { font-size:16px; font-weight:700; }
+  .res-cnt { font-size:12px; color:var(--text2); }
+
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:2px; }
+
+  @media(max-width:720px) {
+    .sidebar { display:none; }
+    .grid,.skel-grid { grid-template-columns:1fr 1fr; gap:10px; }
+    .pbox { width:100vw; height:100vh; border-radius:0; max-height:100vh; }
+    .pip { width:230px; right:8px; }
+    .main { padding:12px; padding-bottom:90px; }
+  }
+  @media(max-width:440px) {
+    .grid,.skel-grid { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── API KEY SCREEN ── -->
+<div class="api-screen" id="apiScreen">
+  <div class="api-card">
+    <div class="api-logo">
+      <div class="api-logo-icon">▶</div>
+      Play<em>Tube</em> Pro
+    </div>
+    <p class="api-sub">Real YouTube videos dekhne ke liye YouTube Data API key zaroori hai. Ek baar dalo, hamesha yaad rahega!</p>
+
+    <div class="api-label">🔑 YouTube Data API v3 Key</div>
+    <input class="api-input" id="apiKeyInput" type="password"
+           placeholder="AIza... (apni API key yahan likho)"
+           onkeydown="if(event.key==='Enter')saveKey()">
+    <button class="api-btn" onclick="saveKey()">▶ App Start Karo</button>
+
+    <div class="api-steps">
+      <strong>API Key kaise milegi? (Free hai!)</strong><br>
+      1️⃣ <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> pe jao<br>
+      2️⃣ New project banao<br>
+      3️⃣ "YouTube Data API v3" enable karo<br>
+      4️⃣ Credentials → Create API Key karo<br>
+      5️⃣ Key copy karke yahan paste karo ✨
+    </div>
+
+    <p class="api-hint">Key sirf tumhare browser mein save hoti hai — koi server par nahi jati 🔒</p>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="goHome()">
+    <div class="logo-icon">▶</div>
+    Play<em>Tube</em>
+  </div>
+
+  <div class="searchbar">
+    <input id="si" type="text" placeholder="Gana, channel ya kuch bhi dhundho..."
+           onkeydown="if(event.key==='Enter')doSearch()">
+    <button class="sbtn" onclick="doSearch()">🔍</button>
+  </div>
+
+  <div class="nav-r">
+    <button class="nbtn" onclick="qs('trending songs 2024')">🔥</button>
+    <button class="nbtn" onclick="qs('new bollywood songs')">🎵</button>
+    <span class="api-tag" onclick="changeKey()" title="API Key badlo">🔑 API</span>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sbi on" onclick="goHome()"><span class="sbi-ic">🏠</span>Home</div>
+    <div class="sbi" onclick="qs('trending music videos 2024')"><span class="sbi-ic">🔥</span>Trending</div>
+    <div class="sbi" onclick="qs('new bollywood songs 2024')"><span class="sbi-ic">🎵</span>Bollywood</div>
+    <div class="sbi" onclick="qs('new punjabi songs 2024')"><span class="sbi-ic">🎶</span>Punjabi</div>
+    <div class="sbi" onclick="qs('qawwali sufi music')"><span class="sbi-ic">🕌</span>Qawwali</div>
+    <div class="sbi" onclick="qs('pakistan gaming youtube')"><span class="sbi-ic">🎮</span>Gaming</div>
+    <div class="sbi" onclick="qs('tech review hindi urdu')"><span class="sbi-ic">💻</span>Tech</div>
+    <div class="sbi" onclick="qs('pakistan funny videos')"><span class="sbi-ic">😂</span>Comedy</div>
+    <div class="sbi" onclick="qs('pakistan cooking recipes')"><span class="sbi-ic">🍳</span>Recipes</div>
+    <div class="sbi" onclick="qs('cricket highlights 2024')"><span class="sbi-ic">🏏</span>Cricket</div>
+
+    <div class="sec-ttl">Artists</div>
+    <div class="sbi" onclick="qs('arijit singh songs')"><span class="sbi-ic">🎤</span>Arijit Singh</div>
+    <div class="sbi" onclick="qs('atif aslam songs')"><span class="sbi-ic">🎤</span>Atif Aslam</div>
+    <div class="sbi" onclick="qs('rahat fateh ali khan')"><span class="sbi-ic">🎤</span>Rahat FRAK</div>
+    <div class="sbi" onclick="qs('ap dhillon songs')"><span class="sbi-ic">🎤</span>AP Dhillon</div>
+    <div class="sbi" onclick="qs('lofi chill music mix')"><span class="sbi-ic">🎧</span>Lo-Fi Mix</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="mainArea">
+    <div class="cats" id="catRow">
+      <div class="cat on" onclick="qs('popular music videos 2024')">All 🎬</div>
+      <div class="cat" onclick="qs('bollywood hit songs 2024')">Bollywood 🎵</div>
+      <div class="cat" onclick="qs('punjabi songs 2024')">Punjabi 🎶</div>
+      <div class="cat" onclick="qs('sufi qawwali music')">Sufi 🕌</div>
+      <div class="cat" onclick="qs('k-pop music 2024')">K-Pop 💜</div>
+      <div class="cat" onclick="qs('gaming videos pakistan')">Gaming 🎮</div>
+      <div class="cat" onclick="qs('pakistan comedy clips')">Comedy 😂</div>
+      <div class="cat" onclick="qs('cricket pakistan 2024')">Cricket 🏏</div>
+    </div>
+    <div id="content">
+      <div class="empty">
+        <div class="ico">🎵</div>
+        <h3>Kuch bhi dhundho!</h3>
+        <p>Upar search box mein gana likho<br>Real YouTube videos foran aa jayenge aur play bhi honge ✨</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- PLAYER MODAL -->
+<div class="poverlay" id="pov">
+  <div class="pbox">
+    <div class="phead">
+      <span class="phead-ttl" id="phttl">Loading...</span>
+      <div class="hbtns">
+        <button class="hbtn" onclick="openPip()" title="Floating">⧉</button>
+        <button class="hbtn" onclick="toMini()" title="Mini">⊟</button>
+        <button class="hbtn" onclick="closePlayer()">✕</button>
+      </div>
+    </div>
+    <div class="yt-wrap" id="ytw"></div>
+    <div class="pbody">
+      <div class="pttl" id="pttl">-</div>
+      <div class="pstats">
+        <span class="pst" id="pviews">👁 -</span>
+        <span class="pst" id="pdate">📅 -</span>
+        <span class="pst" id="pch">📺 -</span>
+      </div>
+      <a class="yt-link" id="ytlink" href="#" target="_blank">▶ YouTube pe kholo</a>
+      <div class="pacts">
+        <button class="abtn red-btn" onclick="likeToggle(this)">👍 Like</button>
+        <button class="abtn" onclick="toastM('🔗 Link copy!')">🔗 Share</button>
+        <button class="abtn" onclick="toMini()">⊟ Mini</button>
+        <button class="abtn" onclick="openPip()">⧉ Floating</button>
+        <button class="abtn" onclick="toastM('⏰ Saved!')">⏰ Save</button>
+        <button class="abtn" onclick="toastM('📁 Playlist mein add!')">📁 Playlist</button>
+      </div>
+      <div class="chrow">
+        <div class="chav" id="chav">🎵</div>
+        <div class="chinfo">
+          <div class="chnm" id="chnm">Channel</div>
+          <div class="chsub">YouTube Channel</div>
+        </div>
+        <button class="sub-b" onclick="subToggle(this)">Subscribe</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PIP -->
+<div class="pip" id="pip">
+  <div class="pip-sc" id="pipsc"></div>
+  <div class="pip-bar">
+    <span class="pip-ttl" id="pipttl">Playing...</span>
+    <button class="pbtn" onclick="expandPip()">⛶</button>
+    <button class="pbtn" onclick="closePip()">✕</button>
+  </div>
+</div>
+
+<!-- MINI -->
+<div class="mini" id="mini">
+  <div class="mprog"><div class="mpf" id="mpf"></div></div>
+  <img class="mthumb" id="mthumb" src="" alt="" onclick="expandMini()">
+  <div class="minfo" onclick="expandMini()">
+    <div class="mttl" id="mttl">-</div>
+    <div class="mch" id="mch">-</div>
+  </div>
+  <div class="mctrls">
+    <button class="mbtnn big" id="mpp" onclick="miniPP()">⏸</button>
+    <button class="mbtnn" onclick="openPip()">⧉</button>
+    <button class="mbtnn" onclick="closeMini()">✕</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ── STATE ──
+let cur = null;
+let results = [];
+let YT_API_KEY = localStorage.getItem('yt_api_key') || '';
+let colors = [
+  'linear-gradient(135deg,#ff3b5c,#ff6b35)',
+  'linear-gradient(135deg,#7b5ea7,#00d4ff)',
+  'linear-gradient(135deg,#00d4ff,#0099cc)',
+  'linear-gradient(135deg,#ffd700,#ff8c00)',
+  'linear-gradient(135deg,#00c875,#00a86b)',
+  'linear-gradient(135deg,#a855f7,#ec4899)',
+  'linear-gradient(135deg,#06b6d4,#3b82f6)',
+  'linear-gradient(135deg,#ff6b35,#ff3b5c)',
+];
+let miniPaused = false;
+let miniProg = 0;
+let miniTmr = null;
+let toastTmr = null;
+
+// ── INIT ──
+window.onload = function() {
+  if (YT_API_KEY) {
+    document.getElementById('apiScreen').classList.add('hidden');
+  }
+};
+
+// ── API KEY MANAGEMENT ──
+function saveKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key || key.length < 10) {
+    toastM('⚠️ Sahi API key dalo!');
+    return;
+  }
+  YT_API_KEY = key;
+  localStorage.setItem('yt_api_key', key);
+  document.getElementById('apiScreen').classList.add('hidden');
+  toastM('✅ API key save ho gayi! Ab search karo 🎵');
+}
+
+function changeKey() {
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('apiScreen').classList.remove('hidden');
+}
+
+// ── TOAST ──
+function toastM(msg) {
+  const el = document.getElementById('toastEl');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(() => el.classList.remove('on'), 2600);
+}
+
+// ── DURATION FORMAT ──
+function parseDuration(iso) {
+  if (!iso) return '--:--';
+  const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!m) return '--:--';
+  const h = parseInt(m[1] || 0);
+  const min = parseInt(m[2] || 0);
+  const sec = parseInt(m[3] || 0);
+  if (h > 0) return `${h}:${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  return `${min}:${String(sec).padStart(2,'0')}`;
+}
+
+// ── VIEW COUNT FORMAT ──
+function fmtViews(n) {
+  if (!n) return '';
+  const num = parseInt(n);
+  if (num >= 1e9) return (num/1e9).toFixed(1) + 'B views';
+  if (num >= 1e6) return (num/1e6).toFixed(1) + 'M views';
+  if (num >= 1e3) return (num/1e3).toFixed(0) + 'K views';
+  return num + ' views';
+}
+
+// ── TIME AGO ──
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 3600) return Math.floor(diff/60) + ' min ago';
+  if (diff < 86400) return Math.floor(diff/3600) + ' hours ago';
+  if (diff < 2592000) return Math.floor(diff/86400) + ' days ago';
+  if (diff < 31536000) return Math.floor(diff/2592000) + ' months ago';
+  return Math.floor(diff/31536000) + ' years ago';
+}
+
+// ── SEARCH ──
+async function doSearch() {
+  const q = document.getElementById('si').value.trim();
+  if (!q) { toastM('⚠️ Pehle kuch likho!'); return; }
+  await search(q);
+}
+
+function qs(q) {
+  document.getElementById('si').value = q;
+  search(q);
+}
+
+async function search(query) {
+  if (!YT_API_KEY) {
+    document.getElementById('apiScreen').classList.remove('hidden');
+    toastM('⚠️ Pehle API key dalo!');
+    return;
+  }
+
+  const box = document.getElementById('content');
+  // Skeleton loader
+  box.innerHTML = `
+    <div class="sec-hd"><h2>🔍 "${query}"</h2><span class="res-cnt">🌐 YouTube pe dhoondh raha hun...</span></div>
+    <div class="skel-grid">${Array(8).fill(0).map((_,i)=>`
+      <div class="sk" style="animation-delay:${i*0.06}s">
+        <div class="sk-t"></div>
+        <div class="sk-b">
+          <div class="sk-l" style="width:85%"></div>
+          <div class="sk-l" style="width:55%"></div>
+          <div class="sk-l" style="width:35%"></div>
+        </div>
+      </div>`).join('')}
+    </div>`;
+
+  try {
+    // Step 1: Search for video IDs
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=12&videoCategoryId=10&key=${YT_API_KEY}`;
+    // Note: videoCategoryId=10 is Music — for general search remove this
+    const searchResp = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=12&safeSearch=none&key=${YT_API_KEY}`
+    );
+
+    if (!searchResp.ok) {
+      const errData = await searchResp.json();
+      const msg = errData?.error?.message || 'API error';
+      throw new Error(msg);
+    }
+
+    const searchData = await searchResp.json();
+    const items = searchData.items || [];
+
+    if (items.length === 0) {
+      box.innerHTML = `
+        <div class="sec-hd"><h2>🔍 "${query}"</h2></div>
+        <div class="empty"><div class="ico">🔎</div><h3>Koi video nahi mila</h3><p>Kuch aur likho aur try karo</p></div>`;
+      return;
+    }
+
+    // Step 2: Get video details (duration, views) using video IDs
+    const videoIds = items.map(i => i.id.videoId).join(',');
+    const detailsResp = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=${videoIds}&key=${YT_API_KEY}`
+    );
+    const detailsData = await detailsResp.json();
+    const detailsMap = {};
+    (detailsData.items || []).forEach(v => { detailsMap[v.id] = v; });
+
+    // Build results array
+    results = items.map(item => {
+      const vid = item.id.videoId;
+      const snip = item.snippet;
+      const detail = detailsMap[vid] || {};
+      return {
+        videoId: vid,
+        title: snip.title,
+        channelTitle: snip.channelTitle,
+        viewCount: fmtViews(detail.statistics?.viewCount),
+        publishedAgo: timeAgo(snip.publishedAt),
+        duration: parseDuration(detail.contentDetails?.duration),
+        thumb: snip.thumbnails?.high?.url || snip.thumbnails?.default?.url
+      };
+    });
+
+    renderGrid(query);
+
+  } catch(e) {
+    let errMsg = e.message || 'Unknown error';
+    // Friendly messages
+    if (errMsg.includes('API key not valid') || errMsg.includes('keyInvalid')) errMsg = 'API key galat hai! Sahi key dalo.';
+    if (errMsg.includes('quota')) errMsg = 'Aaj ki quota khatam ho gayi! Kal dobara try karo.';
+    if (errMsg.includes('Failed to fetch')) errMsg = 'Internet check karo aur dobara try karo.';
+
+    box.innerHTML = `
+      <div class="sec-hd"><h2>🔍 "${query}"</h2></div>
+      <div class="empty">
+        <div class="ico">😕</div>
+        <h3>Search fail ho gaya</h3>
+        <p>${errMsg}</p>
+        <br>
+        <button class="abtn" onclick="changeKey()" style="margin:0 auto;display:inline-flex">🔑 API Key Badlo</button>
+      </div>`;
+    toastM('❌ ' + errMsg);
+  }
+}
+
+// ── RENDER ──
+function renderGrid(query) {
+  const box = document.getElementById('content');
+  box.innerHTML = `
+    <div class="sec-hd">
+      <h2>🔍 "${query}"</h2>
+      <span class="res-cnt">✅ ${results.length} real YouTube videos</span>
+    </div>
+    <div class="grid">
+      ${results.map((v, i) => `
+        <div class="vcard" onclick="openVideo(${i})" style="animation-delay:${i*0.06}s">
+          <div class="thumb">
+            <img src="${v.thumb || `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`}" alt="${v.title}"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="no-thumb" style="background:${colors[i%8]}">🎬</div>
+            <div class="play-ov"><div class="pc">▶</div></div>
+            <div class="dur">${v.duration||'--:--'}</div>
+          </div>
+          <div class="vinfo">
+            <div class="chdot" style="background:${colors[i%8]}">${(v.channelTitle||'?')[0]}</div>
+            <div class="vmeta">
+              <div class="vtitle">${v.title}</div>
+              <div class="vsub">${v.channelTitle}<span class="dot">•</span>${v.viewCount||''}<span class="dot">•</span>${v.publishedAgo||''}</div>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ── OPEN VIDEO ──
+function openVideo(idx) {
+  const v = results[idx];
+  if (!v) return;
+  cur = { ...v, idx, color: colors[idx % 8] };
+
+  document.getElementById('phttl').textContent = v.title;
+  document.getElementById('pttl').textContent = v.title;
+  document.getElementById('pviews').textContent = '👁 ' + (v.viewCount || 'N/A');
+  document.getElementById('pdate').textContent = '📅 ' + (v.publishedAgo || 'N/A');
+  document.getElementById('pch').textContent = '📺 ' + v.channelTitle;
+  document.getElementById('chnm').textContent = v.channelTitle;
+  document.getElementById('chav').style.background = cur.color;
+  document.getElementById('chav').textContent = (v.channelTitle || '?')[0];
+  document.getElementById('ytlink').href = `https://www.youtube.com/watch?v=${v.videoId}`;
+
+  document.getElementById('ytw').innerHTML = `
+    <iframe
+      src="https://www.youtube.com/embed/${v.videoId}?autoplay=1&rel=0&modestbranding=1"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen>
+    </iframe>`;
+
+  const thumb = v.thumb || `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`;
+  document.getElementById('mthumb').src = thumb;
+  document.getElementById('mttl').textContent = v.title;
+  document.getElementById('mch').textContent = v.channelTitle;
+
+  document.getElementById('pov').classList.add('open');
+  startMiniProg();
+}
+
+// ── CLOSE PLAYER ──
+function closePlayer() {
+  document.getElementById('pov').classList.remove('open');
+  document.getElementById('ytw').innerHTML = '';
+}
+
+// ── PIP ──
+function openPip() {
+  if (!cur) return;
+  document.getElementById('pov').classList.remove('open');
+  document.getElementById('mini').classList.remove('on');
+  document.getElementById('pipttl').textContent = cur.title;
+  document.getElementById('pipsc').innerHTML = `
+    <iframe
+      src="https://www.youtube.com/embed/${cur.videoId}?autoplay=1&rel=0&modestbranding=1&controls=1"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>`;
+  const pip = document.getElementById('pip');
+  pip.classList.add('on');
+  drag(pip);
+  toastM('⧉ Floating player on! Kahin bhi drag karo 🎵');
+}
+
+function closePip() {
+  document.getElementById('pipsc').innerHTML = '';
+  document.getElementById('pip').classList.remove('on');
+}
+
+function expandPip() {
+  closePip();
+  if (cur) openVideo(cur.idx);
+}
+
+// ── MINI ──
+function toMini() {
+  if (!cur) return;
+  document.getElementById('pov').classList.remove('open');
+  document.getElementById('ytw').innerHTML = '';
+  document.getElementById('mini').classList.add('on');
+  miniPaused = false;
+  document.getElementById('mpp').textContent = '⏸';
+  toastM('⊟ Mini player on! Background mein chal raha hai 🎵');
+}
+
+function expandMini() {
+  document.getElementById('mini').classList.remove('on');
+  if (cur) openVideo(cur.idx);
+}
+
+function closeMini() {
+  clearInterval(miniTmr);
+  document.getElementById('mini').classList.remove('on');
+}
+
+function miniPP() {
+  miniPaused = !miniPaused;
+  document.getElementById('mpp').textContent = miniPaused ? '▶' : '⏸';
+  toastM(miniPaused ? '⏸ Paused' : '▶ Playing');
+}
+
+function startMiniProg() {
+  clearInterval(miniTmr);
+  miniProg = 0;
+  miniTmr = setInterval(() => {
+    if (!miniPaused) {
+      miniProg = Math.min(100, miniProg + 0.25);
+      document.getElementById('mpf').style.width = miniProg + '%';
+    }
+  }, 500);
+}
+
+// ── DRAG ──
+function drag(el) {
+  let sx, sy, ol, ot;
+  const hs = (e) => {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'IFRAME') return;
+    const r = el.getBoundingClientRect();
+    ol = r.left; ot = r.top;
+    sx = e.clientX; sy = e.clientY;
+    el.style.cursor = 'grabbing';
+    document.addEventListener('mousemove', mv);
+    document.addEventListener('mouseup', mu);
+    document.addEventListener('touchmove', tmv, {passive:false});
+    document.addEventListener('touchend', mu);
+  };
+  const mv = (e) => {
+    let nl = ol + e.clientX - sx, nt = ot + e.clientY - sy;
+    nl = Math.max(0, Math.min(window.innerWidth - el.offsetWidth, nl));
+    nt = Math.max(0, Math.min(window.innerHeight - el.offsetHeight, nt));
+    el.style.left = nl+'px'; el.style.top = nt+'px';
+    el.style.right = 'auto'; el.style.bottom = 'auto';
+  };
+  const tmv = (e) => { e.preventDefault(); mv({clientX:e.touches[0].clientX, clientY:e.touches[0].clientY}); };
+  const mu = () => { el.style.cursor='grab'; document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',mu); document.removeEventListener('touchmove',tmv); document.removeEventListener('touchend',mu); };
+  el.addEventListener('mousedown', hs);
+  el.addEventListener('touchstart', e => hs({clientX:e.touches[0].clientX, clientY:e.touches[0].clientY, target:e.target}), {passive:true});
+}
+
+// ── LIKE / SUB ──
+function likeToggle(btn) {
+  btn.classList.toggle('red-btn');
+  toastM(btn.classList.contains('red-btn') ? '❤️ Liked!' : 'Like hataya');
+}
+function subToggle(btn) {
+  const on = btn.classList.toggle('subd');
+  btn.textContent = on ? '✓ Subscribed' : 'Subscribe';
+  toastM(on ? '🔔 Subscribe ho gaye!' : 'Unsubscribed');
+}
+
+// ── HOME ──
+function goHome() {
+  document.getElementById('si').value = '';
+  document.getElementById('content').innerHTML = `
+    <div class="empty">
+      <div class="ico">🎵</div>
+      <h3>Kuch bhi dhundho!</h3>
+      <p>Upar search box mein gana likho<br>Real YouTube videos foran aa jayenge aur play bhi honge ✨</p>
+    </div>`;
+}
+
+// ── EVENTS ──
+document.getElementById('pov').addEventListener('click', function(e) {
+  if (e.target === this) {
+    document.getElementById('ytw').innerHTML = '';
+    this.classList.remove('open');
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.getElementById('ytw').innerHTML = '';
+    document.getElementById('pov').classList.remove('open');
+  }
+});
+</script>
+</body>
+</html>
